@@ -1,0 +1,49 @@
+{
+	"Inputs": [
+		{
+			"inputName": "paint",
+			"inputType": 2,
+			"parameters": "ViveController1/button1"
+		},
+		{
+			"inputName": "brushSize",
+			"inputType": 2,
+			"parameters": "ViveController1/axis2"
+		},
+		{
+			"inputName": "brushColour",
+			"inputType": 2,
+			"parameters": "ViveController1/axis1"
+		},
+		{
+			"inputName": "brushColour",
+			"inputType": 1,
+			"parameters": "[/]"
+		},
+		{
+			"inputName": "undo",
+			"inputType": 2,
+			"parameters": "ViveController1/button2"
+		},
+		{
+			"inputName": "undo",
+			"inputType": 1,
+			"parameters": "u"
+		},
+		{
+			"inputName": "teleport",
+			"inputType": 2,
+			"parameters": "ViveController2/button1"
+		},
+		{
+			"inputName": "save",
+			"inputType": 1,
+			"parameters": "left shift+s"
+		},
+		{
+			"inputName": "reset",
+			"inputType": 1,
+			"parameters": "left shift+r"
+		}
+	]
+}
