@@ -4,6 +4,7 @@
 #endregion Copyright Information
 
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 /// <summary>
@@ -22,8 +23,8 @@ namespace SentienceLab.MoCap
 		public double   timestamp;   // current timestamp
 		public float    latency;     // latency in seconds from camera capture to the SDK sending the data
 
-		public Actor[]  actors;      // actor data 
-		public Device[] devices;     // data for interaction devices
+		public List<Actor>  actors;  // actor data 
+		public List<Device> devices; // data for interaction devices
 
 		public readonly Mutex mutex; // mutex for controlling acceess to the scene data
 
@@ -37,8 +38,8 @@ namespace SentienceLab.MoCap
 			frameNumber = 0;
 			timestamp   = 0;
 			latency     = 0;
-			actors      = new Actor[0];
-			devices     = new Device[0];
+			actors      = new List<Actor>();
+			devices     = new List<Device>();
 			mutex       = new Mutex();
 		}
 
@@ -47,13 +48,16 @@ namespace SentienceLab.MoCap
 		/// Finds an actor by name.
 		/// </summary>
 		/// <returns>The actor with the given name or <code>null</code> if the actor doesn't exist</returns>
-		/// <param name="name">The name of the actor to find</param>
+		/// <param name="nameRegEx">The name of the actor to find as a regular expression</param>
 		/// 
-		public Actor FindActor(string name)
+		public Actor FindActor(string nameRegEx)
 		{
-			foreach ( Actor a in actors )
+			foreach (Actor a in actors)
 			{
-				if ( (a != null) && (a.name.CompareTo(name) == 0) ) return a;
+				if (a != null)
+				{
+					if (Regex.Matches(a.name, nameRegEx).Count > 0) return a;
+				}
 			}
 			return null;
 		}
@@ -68,7 +72,7 @@ namespace SentienceLab.MoCap
 		public Actor FindActor(int id)
 		{
 			// quick check if id is an array index
-			if ( (id >= 0) && (id < actors.Length) && 
+			if ( (id >= 0) && (id < actors.Count) && 
 				 (actors[id] != null) && (actors[id].id == id) ) return actors[id];
 
 			// no > linear search
@@ -126,7 +130,7 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// <param name="scene">the scene that has been updated</param>
 		/// 
-		void SceneUpdated(Scene scene);
+		void SceneDataUpdated(Scene scene);
 
 
 		/// <summary>
@@ -134,7 +138,7 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// <param name="scene">the scene that has been updated</param>
 		/// 
-		void SceneChanged(Scene scene);
+		void SceneDefinitionChanged(Scene scene);
 	}
 
 
@@ -146,7 +150,7 @@ namespace SentienceLab.MoCap
 	{
 		public readonly Scene  scene; // scene this actor belongs to
 		public readonly string name;  // Name of the actor
-		public          int id;       // ID of the actor (not readonly because skeleton description might change it)
+		public          int    id;    // ID of the actor (not readonly because skeleton description might change it)
 
 		public Marker[] markers;      // Marker data
 		public Bone[]   bones;        // Bone data
@@ -157,13 +161,13 @@ namespace SentienceLab.MoCap
 		/// </summary>
 		/// <param name="scene">the scene the actor belongs to</param>
 		/// <param name="name">the name of the actor</param>
-		/// <param name="id">the ID of the actor</param>
+		/// <param name="id">the ID of the actor (-1: assign automatic ID based on order in actor list, starting at 1)</param>
 		/// 
-		public Actor(Scene scene, string name, int id)
+		public Actor(Scene scene, string name, int id = -1)
 		{
 			this.scene = scene;
-			this.id    = id;
 			this.name  = name;
+			this.id    = (id < 0) ? scene.actors.Count + 1 : id;
 
 			markers = new Marker[0];
 			bones   = new Bone[0]; 
@@ -355,6 +359,18 @@ namespace SentienceLab.MoCap
 		}
 
 		/// <summary>
+		/// Copies data from a Unity position and rotation into the structure
+		/// </summary>
+		/// <param name="pos">Position data</param>
+		/// <param name="rot">Rotation data</param>
+		/// 
+		public void CopyFrom(UnityEngine.Vector3 pos, UnityEngine.Quaternion rot)
+		{
+			px = pos.x; py = pos.y; pz = pos.z;
+			qx = rot.x; qy = rot.y; qz = rot.z; qw = rot.w;
+		}
+
+		/// <summary>
 		/// Copies data from the structure to a Unity position class
 		/// </summary>
 		/// <param name="pos">Position data to copy into</param>
@@ -371,6 +387,18 @@ namespace SentienceLab.MoCap
 		/// 
 		public void CopyTo(ref UnityEngine.Quaternion rot)
 		{
+			rot.x = qx; rot.y = qy; rot.z = qz; rot.w = qw;
+		}
+
+		/// <summary>
+		/// Copies data from the structure to a Unity position and rotation class
+		/// </summary>
+		/// <param name="pos">Position data to copy into</param>
+		/// <param name="rot">Rotation data to copy into</param>
+		/// 
+		public void CopyTo(ref UnityEngine.Vector3 pos, ref UnityEngine.Quaternion rot)
+		{
+			pos.x = px; pos.y = py; pos.z = pz;
 			rot.x = qx; rot.y = qy; rot.z = qz; rot.w = qw;
 		}
 	}
